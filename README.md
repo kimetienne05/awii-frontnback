@@ -1,93 +1,132 @@
-# AWI_Kim_Mathieu_Ines
+# Festival Management Application
 
+Web application to manage a board game festival: festivals and pricing zones, exhibitors, publishers and distributors, games, table reservations with automatic price computation, and a follow-up workflow from the first contact to the paid invoice.
 
+## Table of contents
+
+1. [Features](#features)
+2. [Tech stack](#tech-stack)
+3. [Getting started](#getting-started)
+4. [Project structure](#project-structure)
+5. [Documentation](#documentation)
+6. [Team and roles](#team-and-roles)
+7. [Development workflow](#development-workflow)
+8. [Use of AI](#use-of-ai)
+
+## Features
+
+The application is used by the festival organizers. Exhibitors, publishers, distributors and authors are business entities managed by the organizers, not users of the site.
+
+- **Festivals**: list as cards (name, total tables, tables per pricing zone), creation with a unique name, selection of the current festival (the latest created by default)
+- **Pricing zones and plan zones**: tables, table price, price per m², mapping between plan zones and pricing zones
+- **Publishers and distributors**: lists with sorting, contacts, games. A company can be both a publisher and a distributor
+- **Exhibitors**: the entity that books tables at the festival; it is different from a publisher
+- **Reservations**: tables booked in one or several pricing zones, automatic price, global discounts (free tables or amount), games and their plan zone
+- **Follow-up workflow**: contact dates, states from "no contact yet" to "invoice paid", game list requested/obtained/received
+
+Non-functional requirements: ergonomics, robustness, and about 1,000 read-only clients.
+
+## Tech stack
+
+| Layer | Technology |
+|---|---|
+| Backend | Node.js + Express.js |
+| Database | PostgreSQL with the `pg` driver |
+| Frontend | See the DAT (`DAT.md`) |
+| Environment | Docker (the only tool to install) |
+| CI/CD | GitLab CI/CD pipelines |
 
 ## Getting started
 
-To make it easy for you to get started with GitLab, here's a list of recommended next steps.
+### Prerequisites
 
-Already a pro? Just edit this README.md and make it your own. Want to make it easy? [Use the template at the bottom](#editing-this-readme)!
+Docker (with Docker Compose). Nothing else needs to be installed on the machine.
 
-## Add your files
+### Run the project
 
-* [Create](https://docs.gitlab.com/user/project/repository/web_editor/#create-a-file) or [upload](https://docs.gitlab.com/user/project/repository/web_editor/#upload-a-file) files
-* [Add files using the command line](https://docs.gitlab.com/topics/git/add_files/#add-files-to-a-git-repository) or push an existing Git repository with the following command:
-
-```
-cd existing_repo
-git remote add origin https://gitlab.polytech.umontpellier.fr/mathieu.marty/awi_kim_mathieu_ines.git
-git branch -M main
-git push -uf origin main
+```bash
+git clone <repository-url>
+cd <repository-folder>
+cp .env.example .env      # adjust the values if needed
+docker compose up --build
 ```
 
-## Integrate with your tools
+Then open the frontend at `http://localhost:<frontend-port>`. The API is available at `http://localhost:<api-port>`.
 
-* [Set up project integrations](https://gitlab.polytech.umontpellier.fr/mathieu.marty/awi_kim_mathieu_ines/-/settings/integrations)
+To stop the stack:
 
-## Collaborate with your team
+```bash
+docker compose down        # add -v to also remove the database volume
+```
 
-* [Invite team members and collaborators](https://docs.gitlab.com/user/project/members/)
-* [Create a new merge request](https://docs.gitlab.com/user/project/merge_requests/creating_merge_requests/)
-* [Automatically close issues from merge requests](https://docs.gitlab.com/user/project/issues/managing_issues/#closing-issues-automatically)
-* [Enable merge request approvals](https://docs.gitlab.com/user/project/merge_requests/approvals/)
-* [Set auto-merge](https://docs.gitlab.com/user/project/merge_requests/auto_merge/)
+> Replace the placeholders (`<repository-url>`, ports) once the Docker setup is finished.
 
-## Test and Deploy
+### Run the tests
 
-Use the built-in continuous integration in GitLab.
+```bash
+docker compose run --rm api npm test
+```
 
-* [Get started with GitLab CI/CD](https://docs.gitlab.com/ci/quick_start/)
-* [Analyze your code for known vulnerabilities with Static Application Security Testing (SAST)](https://docs.gitlab.com/user/application_security/sast/)
-* [Deploy to Kubernetes, Amazon EC2, or Amazon ECS using Auto Deploy](https://docs.gitlab.com/topics/autodevops/requirements/)
-* [Use pull-based deployments for improved Kubernetes management](https://docs.gitlab.com/user/clusters/agent/)
-* [Set up protected environments](https://docs.gitlab.com/ci/environments/protected_environments/)
+## Project structure
 
-***
+```
+.
+├── README.md
+├── DAT.md                 # Technical Architecture Document (tag dat-v1 for the first version)
+├── system-prompt.md       # Instructions file for the AI assistant
+├── docs/
+│   └── besoin.md          # Requirements document
+├── frontend/              # Frontend application
+├── api/                   # Node.js + Express.js API
+├── db/                    # PostgreSQL initialization and migration scripts
+├── docker-compose.yml
+└── .gitlab-ci.yml         # CI/CD pipeline
+```
 
-# Editing this README
+> Adjust this tree to the real structure of the repository.
 
-When you're ready to make this README your own, just edit this file and use the handy template below (or feel free to structure it however you want - this is just a starting point!). Thanks to [makeareadme.com](https://www.makeareadme.com/) for this template.
+## Documentation
 
-## Suggestions for a good README
+| Document | Content |
+|---|---|
+| [`docs/besoin.md`](docs/besoin.md) | Requirements, written before the code |
+| [`DAT.md`](DAT.md) | Architecture choices, requirements, roles, and the evolution log |
+| `system-prompt.md` | Instructions given to the AI assistant |
 
-Every project is different, so consider which of these sections apply to yours. The sections used in the template are suggestions for most open source projects. Also keep in mind that while a README can be too long and detailed, too long is better than too short. If you think your README is too long, consider utilizing another form of documentation rather than cutting out information.
+The DAT is versioned: the first version is tagged `dat-v1`. Every later change is recorded in its "Evolutions" section with the decision taken and any gap suffered compared with the initial version.
 
-## Name
-Choose a self-explaining name for your project.
+## Team and roles
 
-## Description
-Let people know what your project can do specifically. Provide context and add a link to any reference visitors might be unfamiliar with. A list of Features or a Background subsection can also be added here. If there are alternatives to your project, this is a good place to list differentiating factors.
+| Member | Main responsibility |
+|---|---|
+| Kim Etienne | Architecture |
+| Ines Mazgar | Architecture |
+| Mathieu Marty | Deployment |
 
-## Badges
-On some READMEs, you may see small images that convey metadata, such as whether or not all the tests are passing for the project. You can use Shields to add some to your README. Many services also have instructions for adding a badge.
+| Role | Responsibility |
+|---|---|
+| Client relationship and requirements | Prepares the interviews, keeps the requirements document up to date, checks functional conformity (everyone) |
+| Architecture | Guarantees the DAT and its consistency with the code |
+| Deployment | Guarantees the Docker environment, the CI/CD pipeline and the deployment on the VM |
+| Quality | Guarantees tests, code reviews and conventions (everyone) |
 
-## Visuals
-Depending on what you are making, it can be a good idea to include screenshots or even a video (you'll frequently see GIFs rather than actual videos). Tools like ttygif can help, but check out Asciinema for a more sophisticated method.
+Every member codes in all layers (frontend, API, database).
 
-## Installation
-Within a particular ecosystem, there may be a common way of installing things, such as using Yarn, NuGet, or Homebrew. However, consider the possibility that whoever is reading your README is a novice and would like more guidance. Listing specific steps helps remove ambiguity and gets people to using your project as quickly as possible. If it only runs in a specific context like a particular programming language version or operating system or has dependencies that have to be installed manually, also add a Requirements subsection.
+## Development workflow
 
-## Usage
-Use examples liberally, and show the expected output if you can. It's helpful to have inline the smallest example of usage that you can demonstrate, while providing links to more sophisticated examples if they are too long to reasonably include in the README.
+- The `main` branch is protected; development happens on `develop` and on feature branches created from it.
+- Every task has a GitLab issue. Each change goes through a merge request with review comments from another member.
+- Commit messages follow the rules of the commit instructions file.
+- The CI/CD pipeline runs on every merge request; a failing pipeline blocks the merge.
 
-## Support
-Tell people where they can go to for help. It can be any combination of an issue tracker, a chat room, an email address, etc.
+## Use of AI
 
-## Roadmap
-If you have ideas for releases in the future, it is a good idea to list them in the README.
+This project uses an AI assistant (Claude) as a support tool. The rules are the following:
 
-## Contributing
-State if you are open to contributions and what your requirements are for accepting them.
+- **What AI is used for**: drafting and structuring documentation (table of contents of the DAT, issue lists, diagrams of entities and relationships), and helping with code and reviews.
+- **Instructions**: the assistant is guided by the `system-prompt.md` file at the root of the repository.
+- **Human responsibility**: every AI-generated content is read, checked and adapted by a team member before being committed. Merge requests are reviewed by a human, whatever the origin of the code.
+- **Decisions**: architecture decisions, requirement choices and exchanges with the client are made by the team, not by the AI.
+- **Traceability**: significant AI contributions are mentioned in the merge request description.
 
-For people who want to make changes to your project, it's helpful to have some documentation on how to get started. Perhaps there is a script that they should run or some environment variables that they need to set. Make these steps explicit. These instructions could also be useful to your future self.
-
-You can also document commands to lint the code or run tests. These steps help to ensure high code quality and reduce the likelihood that the changes inadvertently break something. Having instructions for running tests is especially helpful if it requires external setup, such as starting a Selenium server for testing in a browser.
-
-## Authors and acknowledgment
-Show your appreciation to those who have contributed to the project.
-
-## License
-For open source projects, say how it is licensed.
-
-## Project status
-If you have run out of energy or time for your project, put a note at the top of the README saying that development has slowed down or stopped completely. Someone may choose to fork your project or volunteer to step in as a maintainer or owner, allowing your project to keep going. You can also make an explicit request for maintainers.
+> Complete this section with the exact tools, models and practices of the team.
