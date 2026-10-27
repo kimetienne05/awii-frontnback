@@ -1,0 +1,16 @@
+# IDE
+.idea/
+*.iml
+/ia
+
+# Dépendances
+node_modules/
+
+# Fichiers d'environnement
+.env
+.env.*
+!.env.example
+
+# Build
+dist/
+coverage/
