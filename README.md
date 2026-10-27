@@ -1,132 +1,164 @@
-# Festival Management Application
+# Application de gestion de festival
 
-Web application to manage a board game festival: festivals and pricing zones, exhibitors, publishers and distributors, games, table reservations with automatic price computation, and a follow-up workflow from the first contact to the paid invoice.
+Application web de gestion d'un festival de jeux de société : festivals et zones tarifaires, exposants, éditeurs et distributeurs, catalogue de jeux, réservations de tables avec calcul automatique du prix, placement des jeux sur le plan, facturation et suivi des paiements, et un workflow de suivi des exposants, du premier contact à la facture payée.
 
-## Table of contents
+Projet AWI 2026-2027, Polytech Montpellier, groupe 11.
 
-1. [Features](#features)
-2. [Tech stack](#tech-stack)
-3. [Getting started](#getting-started)
-4. [Project structure](#project-structure)
-5. [Documentation](#documentation)
-6. [Team and roles](#team-and-roles)
-7. [Development workflow](#development-workflow)
-8. [Use of AI](#use-of-ai)
+## Sommaire
 
-## Features
+1. [Fonctionnalités](#fonctionnalités)
+2. [Technologies](#technologies)
+3. [Démarrage](#démarrage)
+4. [Déploiement](#déploiement)
+5. [Organisation du dépôt](#organisation-du-dépôt)
+6. [Documentation](#documentation)
+7. [Équipe et rôles](#équipe-et-rôles)
+8. [Méthode de travail](#méthode-de-travail)
+9. [Utilisation de l'IA](#utilisation-de-lia)
 
-The application is used by the festival organizers. Exhibitors, publishers, distributors and authors are business entities managed by the organizers, not users of the site.
+## Fonctionnalités
 
-- **Festivals**: list as cards (name, total tables, tables per pricing zone), creation with a unique name, selection of the current festival (the latest created by default)
-- **Pricing zones and plan zones**: tables, table price, price per m², mapping between plan zones and pricing zones
-- **Publishers and distributors**: lists with sorting, contacts, games. A company can be both a publisher and a distributor
-- **Exhibitors**: the entity that books tables at the festival; it is different from a publisher
-- **Reservations**: tables booked in one or several pricing zones, automatic price, global discounts (free tables or amount), games and their plan zone
-- **Follow-up workflow**: contact dates, states from "no contact yet" to "invoice paid", game list requested/obtained/received
+L'application est utilisée par les membres de l'association, avec des rôles hiérarchiques : administrateur, commercial, gestionnaire de plan, gestionnaire de jeux, membre de l'organisation, plus le rôle de trésorier, qui s'ajoute aux autres. Le visiteur consulte la liste des festivals sans compte. Les exposants, éditeurs, distributeurs et auteurs sont des données gérées dans l'application : ils n'ont pas de compte.
 
-Non-functional requirements: ergonomics, robustness, and about 1,000 read-only clients.
+- **Festivals** : liste sous forme de cartes (nom, tables disponibles au total et par zone), création avec un nom unique, copie d'un festival précédent, choix du festival courant (par défaut le dernier créé).
+- **Zones tarifaires et zones du plan** : capacité en tables, prix de la table, remise de précommande ; chaque zone du plan est rattachée à une zone tarifaire. Une surface demandée en m² est convertie en tables.
+- **Structures** : éditeurs, distributeurs et exposants, avec leurs contacts. Une même structure peut cumuler plusieurs rôles.
+- **Exposants** : la structure qui réserve des tables sur un festival. Ce n'est pas forcément un éditeur : ce peut être un prestataire, ou l'association elle-même (réservation non facturée).
+- **Jeux** : catalogue triable, règles en PDF.
+- **Réservations** : tables réservées dans une ou plusieurs zones tarifaires, prix calculé automatiquement, remises (précommande, tables offertes ou montant), repas, puis jeux présentés et leur place sur le plan.
+- **Workflow de suivi** : dates de contact, statuts de « pas encore contacté » à « présent », liste de jeux demandée, obtenue et reçue.
+- **Facturation** : factures PDF créées par le trésorier et jamais modifiées (une correction passe par une annulation), paiements en plusieurs fois, reste à payer.
 
-## Tech stack
+Exigences non fonctionnelles : ergonomie, robustesse (aucune surréservation, factures immuables, toutes les actions datées) et environ 1 000 visiteurs en lecture (chiffre à faire confirmer par le client).
 
-| Layer | Technology |
+## Technologies
+
+| Couche | Technologie |
 |---|---|
-| Backend | Node.js + Express.js |
-| Database | PostgreSQL with the `pg` driver |
-| Frontend | See the DAT (`DAT.md`) |
-| Environment | Docker (the only tool to install) |
-| CI/CD | GitLab CI/CD pipelines |
+| Front-end | Angular 22 (composants standalone, signaux, `inject()`, `@if` / `@for`), servi par nginx |
+| Back-end | Node.js 24, TypeScript, Express 5 ; validation avec `zod`, PDF avec PDFKit |
+| Base de données | PostgreSQL 18, avec le pilote `pg`, sans ORM : requêtes SQL écrites à la main et paramétrées |
+| Environnement | Docker et Docker Compose (seuls outils à installer) |
+| CI/CD | GitLab CI/CD, déploiement sur la VM du groupe |
 
-## Getting started
+Les choix et leurs justifications sont détaillés dans le DAT et ses ADR (voir [Documentation](#documentation)).
 
-### Prerequisites
+## Démarrage
 
-Docker (with Docker Compose). Nothing else needs to be installed on the machine.
+### Prérequis
 
-### Run the project
+Docker, avec Docker Compose. Rien d'autre n'est à installer.
+
+### Lancer le projet en développement
 
 ```bash
-git clone <repository-url>
-cd <repository-folder>
-cp .env.example .env      # adjust the values if needed
+git clone https://gitlab.polytech.umontpellier.fr/mathieu.marty/awi_kim_mathieu_ines.git
+cd awi_kim_mathieu_ines
+cp .env.example .env      # adapter les valeurs si besoin
 docker compose up --build
 ```
 
-Then open the frontend at `http://localhost:<frontend-port>`. The API is available at `http://localhost:<api-port>`.
+Puis ouvrir :
 
-To stop the stack:
+- l'application : `http://localhost:4200` ;
+- l'API : `http://localhost:3000/api/v1` (test de santé : `http://localhost:3000/api/v1/sante`) ;
+- PostgreSQL est exposé en local sur le port `5432`.
+
+Au démarrage, l'API applique les migrations SQL qui manquent (dossier `db/migrations`).
+
+Pour arrêter :
 
 ```bash
-docker compose down        # add -v to also remove the database volume
+docker compose down        # ajouter -v pour supprimer aussi le volume de la base
 ```
 
-> Replace the placeholders (`<repository-url>`, ports) once the Docker setup is finished.
-
-### Run the tests
+### Lancer les tests
 
 ```bash
 docker compose run --rm api npm test
 ```
 
-## Project structure
+## Déploiement
+
+L'application est déployée sur la VM du groupe (`162.38.111.31`), joignable depuis le réseau de Polytech ou par le VPN de l'école.
+
+- Le pipeline GitLab construit les images, les pousse dans le registre du projet (étiquetées par le SHA du commit), puis le job `deploy` se connecte à la VM en SSH et relance les conteneurs.
+- Sur la VM, Docker fonctionne en mode rootless, sous le compte `mathieu.marty`.
+- Retour arrière : relancer le job manuel `rollback` avec l'étiquette d'une version précédente (`TAG=<sha>`).
+- Sauvegarde : un `pg_dump` quotidien de la base et une archive des PDF de règles, conservés 14 jours.
+
+Le détail est dans les sections 7 et 8 du DAT.
+
+## Organisation du dépôt
 
 ```
 .
 ├── README.md
-├── DAT.md                 # Technical Architecture Document (tag dat-v1 for the first version)
-├── system-prompt.md       # Instructions file for the AI assistant
+├── CLAUDE.md               # instructions données à l'assistant IA (voir « Utilisation de l'IA »)
 ├── docs/
-│   └── besoin.md          # Requirements document
-├── frontend/              # Frontend application
-├── api/                   # Node.js + Express.js API
-├── db/                    # PostgreSQL initialization and migration scripts
-├── docker-compose.yml
-└── .gitlab-ci.yml         # CI/CD pipeline
+│   ├── DAT.tex, DAT.pdf    # Document d'Architecture Technique
+│   ├── ADR-registre.tex, ADR-registre.pdf
+│   ├── besoin.tex, besoin.pdf   # document de besoin, qui fait référence
+│   ├── preambule.tex, adr-fiches.tex, besoins-contenu.tex, entrevues-table.tex
+│   ├── logos/
+│   └── adr/                # une fiche par ADR
+├── frontend/               # application Angular
+├── api/                    # API Node.js, TypeScript, Express
+├── db/
+│   └── migrations/         # scripts SQL numérotés (001_initial.sql…)
+├── docker-compose.yml      # développement
+├── docker-compose.prod.yml # production (images du registre)
+└── .gitlab-ci.yml          # pipeline CI/CD
 ```
 
-> Adjust this tree to the real structure of the repository.
+> À ajuster si la structure réelle du dépôt est différente.
 
 ## Documentation
 
-| Document | Content |
+| Document | Contenu |
 |---|---|
-| [`docs/besoin.md`](docs/besoin.md) | Requirements, written before the code |
-| [`DAT.md`](DAT.md) | Architecture choices, requirements, roles, and the evolution log |
-| `system-prompt.md` | Instructions given to the AI assistant |
+| [`docs/besoin.pdf`](docs/besoin.pdf) | Besoin du client : notes d'entrevues, besoins, règles de gestion, questions ouvertes. Il fait référence en cas de désaccord avec le client. |
+| [`docs/DAT.pdf`](docs/DAT.pdf) | Architecture : contraintes, diagrammes C4, modèle de données, sécurité, déploiement, CI/CD, ADR, journal des évolutions |
+| [`docs/ADR-registre.pdf`](docs/ADR-registre.pdf) | Toutes les décisions d'architecture, avec leurs critères, leurs options et leurs conséquences |
 
-The DAT is versioned: the first version is tagged `dat-v1`. Every later change is recorded in its "Evolutions" section with the decision taken and any gap suffered compared with the initial version.
+Les documents sont rédigés en LaTeX, avec l'accord de l'enseignant : les sources `.tex` sont dans `docs/`, avec les PDF compilés. Pour recompiler, lancer `pdflatex DAT.tex` deux fois dans `docs/` (même chose pour `ADR-registre.tex` et `besoin.tex`).
 
-## Team and roles
+Le DAT est versionné par des tags Git : `dat-v1` pour la version initiale, puis un tag par version suivante (`dat-v1.1`…). Chaque changement est noté dans le journal des évolutions du DAT, en distinguant les évolutions décidées des écarts subis.
 
-| Member | Main responsibility |
-|---|---|
-| Kim Etienne | Architecture |
-| Ines Mazgar | Architecture |
-| Mathieu Marty | Deployment |
+## Équipe et rôles
 
-| Role | Responsibility |
-|---|---|
-| Client relationship and requirements | Prepares the interviews, keeps the requirements document up to date, checks functional conformity (everyone) |
-| Architecture | Guarantees the DAT and its consistency with the code |
-| Deployment | Guarantees the Docker environment, the CI/CD pipeline and the deployment on the VM |
-| Quality | Guarantees tests, code reviews and conventions (everyone) |
+| Rôle | Responsable | Responsabilité |
+|---|---|---|
+| Relation client et besoin | toute l'équipe | prépare les entrevues, tient à jour le document de besoin, vérifie la conformité fonctionnelle |
+| Architecture | Ines Mazgar | garantit le DAT et sa cohérence avec le code |
+| Déploiement | Mathieu Marty | garantit l'environnement Docker, le pipeline CI/CD et le déploiement sur la VM |
+| Qualité | Kim Etienne | garantit les tests, les revues de code et les conventions |
 
-Every member codes in all layers (frontend, API, database).
+Chaque membre code dans toutes les couches (front-end, API, base de données).
 
-## Development workflow
+## Méthode de travail
 
-- The `main` branch is protected; development happens on `develop` and on feature branches created from it.
-- Every task has a GitLab issue. Each change goes through a merge request with review comments from another member.
-- Commit messages follow the rules of the commit instructions file.
-- The CI/CD pipeline runs on every merge request; a failing pipeline blocks the merge.
+- La branche `main` est protégée : aucun push direct. Le développement se fait sur des branches de fonctionnalité.
+- Chaque tâche a une issue GitLab. Chaque changement passe par une merge request, relue et approuvée par un autre membre que son auteur.
+- Les messages de commit sont explicites (par exemple `feat(reservations): calcul du prix avec remise`).
+- Le pipeline lance le lint et les tests sur chaque branche et chaque merge request ; un échec bloque la fusion. Seule la branche `main` déclenche la construction des images et le déploiement.
 
-## Use of AI
+## Utilisation de l'IA
 
-This project uses an AI assistant (Claude) as a support tool. The rules are the following:
+L'énoncé autorise les assistants IA, à condition que l'équipe décide et maîtrise tout ce qui est livré.
 
-- **What AI is used for**: drafting and structuring documentation (table of contents of the DAT, issue lists, diagrams of entities and relationships), and helping with code and reviews.
-- **Instructions**: the assistant is guided by the `system-prompt.md` file at the root of the repository.
-- **Human responsibility**: every AI-generated content is read, checked and adapted by a team member before being committed. Merge requests are reviewed by a human, whatever the origin of the code.
-- **Decisions**: architecture decisions, requirement choices and exchanges with the client are made by the team, not by the AI.
-- **Traceability**: significant AI contributions are mentioned in the merge request description.
-
-> Complete this section with the exact tools, models and practices of the team.
+- **Outils** : Claude (Anthropic), utilisé dans l'interface claude.ai. *À compléter : autres outils utilisés par chaque membre, par exemple un assistant de code dans l'éditeur.*
+- **Tâches** :
+  - restructuration du DAT selon la trame et relecture de sa cohérence avec l'énoncé ;
+  - rédaction d'ADR à partir des options discutées en équipe ;
+  - dessin des diagrammes en TikZ ;
+  - explications techniques (sécurité, SQL, déploiement) ;
+  - aide au code et aux revues.
+- **Vérifications** :
+  - tout contenu produit par l'IA est relu, vérifié et adapté par un membre avant d'être commité ;
+  - les PDF sont recompilés et relus ;
+  - les ADR proposés par l'IA restent au statut « Proposée » jusqu'à leur relecture et leur acceptation par l'équipe ;
+  - le code suit le circuit normal des merge requests, relues par un humain.
+- **Décisions** : les choix d'architecture, l'interprétation du besoin et les échanges avec le client relèvent de l'équipe, pas de l'IA.
+- **Instructions** : le fichier `CLAUDE.md`, à la racine, contient les consignes données à l'assistant de codage.
+- **Traçabilité** : une contribution importante de l'IA est signalée dans la description de la merge request.
